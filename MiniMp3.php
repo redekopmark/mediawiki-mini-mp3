@@ -1,6 +1,7 @@
 <?php
  
-$wgHooks['ParserFirstCallInit'][] = 'wfMp3';
+$wgHooks['LanguageGetMagic'][]    = 'MiniMP3::MP3Magic'; # Initialise magic words
+$wgHooks['ParserFirstCallInit'][] = 'MiniMP3::wfMp3';
 $wgMediaHandlers['audio/mp3'] = 'MiniMp3Handler';
 $wgMediaHandlers['audio/mpeg'] = 'MiniMp3Handler';
 $wgFileExtensions[] = 'mp3';
@@ -9,15 +10,26 @@ $wgExtensionCredits['parserhook'][] = array(
 	'name' => 'MiniMp3',
 	'description' => 'Uses a very small flash player to stream your mp3 files',
 	'author' => 'Reddo',
-	'version' => '0.3',
+	'version' => '0.4',
 	'url' => 'http://www.mediawiki.org/wiki/Extension:MiniMp3'
 );
  
-function wfMp3( Parser &$parser ) {
-	$parser->setHook('mp3', 'renderMp3');
-	$parser->setHook('audio///mpeg', 'renderMp3');
-	$parser->setHook('mpeg', 'renderMp3');
-	return true;
+Class MiniMP3{
+	static function wfMp3( Parser &$parser ) {
+		$parser->setFunctionHook('mp3', 'renderMp3');
+		$parser->setHook('audio///mpeg', 'renderMp3');
+		$parser->setHook('mpeg', 'renderMp3');
+		return true;
+	}
+	
+	# Initialise magic words
+	static function MP3Magic ( &$magicWords, $langCode = 'en' )
+	{
+		# The first array element is whether to be case sensitive, in this case (0) it is not case sensitive, 1 would be sensitive
+		# All remaining elements are synonyms for our parser function
+		$magicWords['mp3'] = array( 1, 'renderMp3' );
+		return true; # just needed
+	}
 }
 
 # The callback function for converting the input text to HTML output
@@ -47,7 +59,9 @@ function renderMp3( $input, $params ) {
 	
 		$output = '<audio src="'.$mp3.'" color="#'.$Color.'" played="#'.$Played.'"></audio>';
 		return $output;
-}
+}	
+
+
 
 class MiniMp3Handler extends MediaHandler {
 var $buttColor, $slidColor, $loadColor, $backgroundCode, $bg;
@@ -59,13 +73,7 @@ var $buttColor, $slidColor, $loadColor, $backgroundCode, $bg;
 	function getImageSize( $file, $path ) { return false; }
 
 	function getParamMap() {
-		return array(
-//			'mp3_color' => 'color',
-//			'mp3_slidecolor' => 'slidcolor',
-//			'mp3_loadcolor' => 'loadcolor',
-//			'mp3_buttoncolor' => 'buttoncolor',
-//			'mp3_backColor' => 'bg',
-		);
+		return array();
 	}
 
 	# Prevent "no higher resolution" message.
